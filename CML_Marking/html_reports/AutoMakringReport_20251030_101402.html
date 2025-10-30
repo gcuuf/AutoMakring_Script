@@ -1,0 +1,250 @@
+
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Scoring Result Check Report</title>
+<style>
+body { 
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+  }
+h1 {
+    color: white;
+    text-align: center;
+}
+.card {  
+    width: 60%;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 15px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+.ok { border: 3px solid #4CAF50; }
+.fail { border: 3px solid #f44336; }
+.question-title { font-size: 18px; color: #0078d7; font-weight: bold; }
+.status { font-size: 16px; margin-top: 8px; }
+.score { font-size: 14px; color: #333; margin-top: 6px; }
+.raw-output { 
+    font-family: Consolas, monospace;
+    background-color: #f1f1f1;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    color: #333;
+    max-height: 400px;
+    overflow-y: auto;
+    border-left: 4px solid #ccc;
+}
+.final {
+    width: 65%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 25px;
+    border-radius: 20px;
+    background-color: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    margin-top: 40px;
+}
+button {
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+button.correct { background-color: #4CAF50; color: white; }
+button.wrong { background-color: #f44336; color: white; margin-left: 8px; }
+button:hover { opacity: 0.8; }
+</style>
+</head>
+<body>
+<h1 style='color: white;'>Scoring Result Check Report - 2025/10/30 10:14:19</h1>
+
+<script>
+function updateScore() { 
+    var total = 0;
+    var max = 0;
+    document.querySelectorAll('.card').forEach(function(card){
+        var score = parseFloat(card.getAttribute('data-score'));
+        var passed = card.classList.contains('ok');
+        max = Math.round((max + score) * 100) / 100;
+        if (passed) total = Math.round((total + score) * 100) / 100;
+    });
+    document.getElementById('final-score').innerText = 'Final Score: ' + total.toFixed(2) + ' / Total Points: ' + max.toFixed(2);
+}
+
+function markCard(el, passed) {
+    var card = el.closest('.card');
+    card.classList.remove('ok', 'fail');
+    var status = card.querySelector('.status b');
+    if (passed) {
+        card.classList.add('ok');
+        status.innerText = '✅ Confirmed Correct';
+        status.style.color = '#4CAF50';
+    } else {
+        card.classList.add('fail');
+        status.innerText = '❌ Confirmed Incorrect';
+        status.style.color = '#f44336';
+    }
+    updateScore();
+}
+</script>
+
+<div class='card ok' data-score='0.25'>
+    <div class='question-title'>1. basic configuration</div>
+    
+    <div class='note'>Note: Check only if password type is 8. Hash value could be different.</div>
+    <div class='status'><b style='color:#4CAF50;'>✅ basic configuration correct</b></div>
+    <div class='score'>Score: 0.25 / Points: 0.25</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: wsc2026.cn, clock timezone KST 9 0, enable secret 8
+
+✅ Node ISP: Success (Found: wsc2026.cn, clock timezone KST 9 0, enable secret 8)
+ISP#show running-config | include wsc2026.cn
+ip domain name wsc2026.cn
+
+ISP#show running-config | inc timezone
+clock timezone KST 9 0
+
+ISP#show run | include enable secret
+enable secret 8 $8$7ZAQ/42/pgDlik$xjII6ZvOoeSEcbMHslA5TJ5R/kWv/Ltk729TWG6iNiM
+
+
+
+✅ Node RTA: Success (Found: wsc2026.cn, clock timezone KST 9 0, enable secret 8)
+RTA#show running-config | include wsc2026.cn
+ip domain name wsc2026.cn
+
+RTA#show running-config | inc timezone
+clock timezone KST 9 0
+
+RTA#show run | include enable secret
+enable secret 8 $8$3Z9deJGEq5E1j.$0TkdGC258WH0gtqg33cyy0kQK1JyAHNu5yEfkwyB7zk
+
+</pre></div>
+</div>
+
+<div class='card ok' data-score='0.20'>
+    <div class='question-title'>2. ip addressing</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ ip addressing correct</b></div>
+    <div class='score'>Score: 0.2 / Points: 0.2</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: GigabitEthernet1, 100.48.0.254, Loopback0, 8.8.8.8, Loopback1, 13.248.201.117
+
+✅ Node ISP: Success (Found: GigabitEthernet1, 100.48.0.254, Loopback0, 8.8.8.8, Loopback1, 13.248.201.117)
+ISP#show ip interface brief | exclude unassigned
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet1       100.48.0.254    YES TFTP   administratively down down    
+Loopback0              8.8.8.8         YES TFTP   up                    up      
+Loopback1              13.248.201.117  YES TFTP   up                    up      
+
+
+</pre></div>
+</div>
+
+<div class='card fail' data-score='0.40'>
+    <div class='question-title'>3. pki server</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ pki server incorrect</b></div>
+    <div class='score'>Score: 0 / Points: 0.4</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: Status: enabled, State: enabled, CN=ROOTCA, auto
+
+❌ Node ISP: Incorrect configuration (Found: CN=ROOTCA, auto, Missing: Status: enabled, State: enabled)
+ISP#show crypto pki server | include enabled|Issuer|mode
+    Issuer name: CN=ROOTCA
+    Granting mode is: auto
+
+</pre></div>
+</div>
+
+<div class='card ok' data-score='0.30'>
+    <div class='question-title'>4. ospf - basic configuration</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ ospf - basic configuration correct</b></div>
+    <div class='score'>Score: 0.3 / Points: 0.3</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 8.8.8.8, 100.48.0.0 0.0.0.255 area 0
+
+✅ Node ISP: Success (Found: 8.8.8.8, 100.48.0.0 0.0.0.255 area 0)
+ISP#show ip ospf topology-info | inc 8.8.8.8
+            OSPF Router with ID (8.8.8.8) (Process ID 1)
+
+ISP#show ip protocols | include 100.48
+    100.48.0.0 0.0.0.255 area 0
+
+</pre></div>
+</div>
+
+<div class='card fail' data-score='0.40'>
+    <div class='question-title'>5. ospf - no dr/bdr election</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ ospf - no dr/bdr election incorrect</b></div>
+    <div class='score'>Score: 0 / Points: 0.4</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 0.0.0.2           0   FULL/  -, 0.0.0.1           0   FULL/  -
+
+❌ Node ISP: Incorrect configuration (Found: None, Missing: 0.0.0.2           0   FULL/  -, 0.0.0.1           0   FULL/  -)
+ISP#show ip ospf neighbor | include FULL
+
+
+</pre></div>
+</div>
+
+<div class='card ok' data-score='0.30'>
+    <div class='question-title'>6. ospf - always advertise default route</div>
+    
+    <div class='note'>Note: No static default route exists</div>
+    <div class='status'><b style='color:#4CAF50;'>✅ ospf - always advertise default route correct</b></div>
+    <div class='score'>Score: 0.3 / Points: 0.3</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>Confirm Correct ✅</button>
+        <button class='wrong' onclick='markCard(this, false)'>Confirm Incorrect ❌</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 0.0.0.0
+
+✅ Node ISP: Success (Found: 0.0.0.0)
+ISP#show ip route  static | inc 0.0.0.0
+
+
+ISP#show ip ospf database | inc 0.0.0.0
+0.0.0.0         8.8.8.8         1434        0x80000004 0x00444B 1         
+
+</pre></div>
+</div>
+
+<div class='final' id='final-score'>
+Final Score: 2.10 / Total Points: 1.85
+</div>
+</body></html>
