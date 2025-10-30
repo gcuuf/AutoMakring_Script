@@ -11,7 +11,7 @@ def initialize_html():
 <meta charset='UTF-8'>
 <title>Scoring Result Check Report</title>
 <style>
-body {{ 
+body {{
     font-family: "Segoe UI", Arial, sans-serif;
     background: linear-gradient(135deg, #0f172a, #1e293b);
     display: flex;
@@ -23,7 +23,7 @@ h1 {{
     color: white;
     text-align: center;
 }}
-.card {{  
+.card {{
     width: 60%;
     background: white;
     border-radius: 15px;
@@ -38,10 +38,28 @@ h1 {{
 }}
 .ok {{ border: 3px solid #4CAF50; }}
 .fail {{ border: 3px solid #f44336; }}
-.question-title {{ font-size: 18px; color: #0078d7; font-weight: bold; }}
-.status {{ font-size: 16px; margin-top: 8px; }}
-.score {{ font-size: 14px; color: #333; margin-top: 6px; }}
-.raw-output {{ 
+.note {{
+    border: 3px solid #FFC107; /* 黄色边框 */
+    font-weight: bold;
+    color: #800080; /* 紫色 */
+    margin-top: 1em;
+    margin-bottom: 1em;
+}}
+.question-title {{
+    font-size: 18px;
+    color: #0078d7;
+    font-weight: bold;
+}}
+.status {{
+    font-size: 16px;
+    margin-top: 8px;
+}}
+.score {{
+    font-size: 14px;
+    color: #333;
+    margin-top: 6px;
+}}
+.raw-output {{
     font-family: Consolas, monospace;
     background-color: #f1f1f1;
     padding: 10px;
@@ -74,8 +92,15 @@ button {{
     cursor: pointer;
     transition: 0.2s;
 }}
-button.correct {{ background-color: #4CAF50; color: white; }}
-button.wrong {{ background-color: #f44336; color: white; margin-left: 8px; }}
+button.correct {{
+    background-color: #4CAF50;
+    color: white;
+}}
+button.wrong {{
+    background-color: #f44336;
+    color: white;
+    margin-left: 8px;
+}}
 button:hover {{ opacity: 0.8; }}
 </style>
 </head>
@@ -83,7 +108,7 @@ button:hover {{ opacity: 0.8; }}
 <h1 style='color: white;'>Scoring Result Check Report - {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}</h1>
 
 <script>
-function updateScore() {{ 
+function updateScore() {{
     var total = 0;
     var max = 0;
     document.querySelectorAll('.card').forEach(function(card){{
@@ -97,7 +122,7 @@ function updateScore() {{
 
 function markCard(el, passed) {{
     var card = el.closest('.card');
-    card.classList.remove('ok', 'fail');
+    card.classList.remove('ok', 'fail', 'note');
     var status = card.querySelector('.status b');
     if (passed) {{
         card.classList.add('ok');
@@ -114,8 +139,14 @@ function markCard(el, passed) {{
 '''
 
 def add_card_to_html(html, result, index, note=None):
-    border_class = "ok" if result.passed else "fail"
-    status_color = "#4CAF50" if result.passed else "#f44336"
+    # 修改边框类和状态颜色逻辑，当有note时设置为黄色
+    if note:
+        border_class = "note"
+        status_color = "#FFC107"  # 黄色
+    else:
+        border_class = "ok" if result.passed else "fail"
+        status_color = "#4CAF50" if result.passed else "#f44336"
+    
     earned = result.score if result.passed else 0
     
     raw_section = ""
