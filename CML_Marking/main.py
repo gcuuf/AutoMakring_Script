@@ -10,13 +10,13 @@ from report_generator import initialize_html, add_card_to_html, complete_html, s
 
 def check_configuration(check_name, commands, expected_values, nodes, note=None, score=0):
     node_results = []
-    all_passed = True  # 初始化为 True，假设全部通过
+    all_passed = True  # initially set to True, assuming all_pass
 
     for node in nodes:
         try:
             result_text = ""
             connected = True
-            # 支持多命令执行
+            # support multiple commands execution
             for cmd in commands:
                 cmd_connected, cmd_output = connect(node, cmd)
                 if not cmd_connected:
@@ -54,11 +54,6 @@ def check_configuration(check_name, commands, expected_values, nodes, note=None,
             node_results.append(f"❌ Node {node}: Connection failed\n{result_text}")
             all_passed = False
 
-    # 累加全局分数
-    if all_passed:
-        utils.global_total_score += score
-
-    # 合并结果并添加到 utils.global_results
     expected_values_str = ", ".join(expected_values) if expected_values else "None"
     combined_result = f"Expected values: {expected_values_str}\n\n" + "\n\n".join(node_results)
     status_text = f"✅ {check_name} correct" if all_passed else f"❌ {check_name} incorrect"
@@ -74,10 +69,10 @@ def check_configuration(check_name, commands, expected_values, nodes, note=None,
 
 
 def main():
-    utils.global_total_score = 0  # 重置总分
+    utils.global_total_score = 0  # reset total score
     print("Starting network device configuration check...")
 
-    # 读取 Excel 配置
+    # read Excel configuration
     excel_path = os.path.join(os.path.dirname(__file__), 'check_configuration.xlsx')
     try:
         df = pd.read_excel(excel_path)
@@ -105,7 +100,7 @@ def main():
             score=float(row['score']) if pd.notna(row['score']) else 0
         )
 
-    # 生成 HTML 报告
+    # generate HTML report
     print("\nGenerating HTML report...")
     html = initialize_html()
     for i, result in enumerate(utils.global_results, 1):
