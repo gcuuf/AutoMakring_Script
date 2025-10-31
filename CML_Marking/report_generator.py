@@ -470,8 +470,118 @@ def save_and_open_report(html_content):
     if not os.path.exists(HTML_OUTPUT_DIR):
         os.makedirs(HTML_OUTPUT_DIR)
     
+    # 添加返回顶部按钮的HTML
+    html_content += '''
+    <button id="back-to-top" class="back-to-top-btn" title="回到顶部">👍</button>
+    '''
+    
+    # 添加返回顶部按钮的CSS
+    html_content += '''
+    <style>
+    .back-to-top-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #0ea5e9, #0284c7);
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .back-to-top-btn.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .back-to-top-btn:hover {
+        background: linear-gradient(145deg, #0284c7, #0369a1);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.6);
+    }
+    .back-to-top-btn:active {
+        transform: scale(0.95);
+    }
+    
+    /* 气泡动画样式 */
+    .bubble {
+        position: absolute;
+        pointer-events: none;
+        z-index: 9999;
+        animation: bubble-animation 4s ease-out forwards;
+    }
+    
+    @keyframes bubble-animation {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1.5) translateY(-100px) rotate(30deg);
+            opacity: 0;
+        }
+    }
+    </style>
+    '''
+    
+    # 添加返回顶部按钮的JavaScript
+    html_content += '''
+    <script>
+    const backToTopBtn = document.getElementById('back-to-top');
+    window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    });
+    backToTopBtn.addEventListener('click', (e) => {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        
+        // 创建点击气泡效果
+        const createBubbles = (count) => {
+            const bubbles = ['❤️', '👍', '✨', '🌟', '🎉'];
+            const btnRect = backToTopBtn.getBoundingClientRect();
+            const startX = btnRect.left + btnRect.width / 2;
+            const startY = btnRect.top + btnRect.height / 2;
+            
+            for (let i = 0; i < count; i++) {
+                const bubble = document.createElement('span');
+                bubble.className = 'bubble';
+                bubble.textContent = bubbles[Math.floor(Math.random() * bubbles.length)];
+                bubble.style.left = `${startX}px`;
+                bubble.style.top = `${startY}px`;
+                bubble.style.fontSize = `${12 + Math.random() * 16}px`;
+                bubble.style.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+                bubble.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+                bubble.style.animationDelay = `${Math.random() * 500}ms`;
+                
+                document.body.appendChild(bubble);
+                
+                // 动画结束后移除元素
+                setTimeout(() => bubble.remove(), 4000);
+            }
+        };
+        
+        createBubbles(15); // 创建15个随机气泡
+    });
+    </script>
+    '''
+    
     with open(HTML_FILEPATH, 'w', encoding='utf-8') as f:
         f.write(html_content)
     
     print(f"✅ Report generated: {HTML_FILEPATH}")
+    
     webbrowser.open(HTML_FILEPATH)

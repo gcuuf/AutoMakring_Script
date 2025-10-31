@@ -1,0 +1,776 @@
+
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Scoring Result Check Report</title>
+
+<style>
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+}
+/* ============ 外层导航栏 ============ */
+#sticky-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw; /* ✅ 确保铺满整个视口宽度 */
+  z-index: 100;
+  background: transparent; /* 初始透明 */
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+}
+/* 滚动后添加视觉强调 */
+#sticky-header.scrolled {
+  background: rgba(30, 41, 59, 0.8); /* 半透明深色背景 */
+  backdrop-filter: blur(10px);       /* 模糊效果 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+/* ============ 文本样式 ============ */
+.header-container {
+   display: flex;
+   align-items: center;
+   gap: 16px;
+   padding: 8px 0;
+ }
+ .header-container label {
+   color: #f1f5f9;
+   font-size: 15px;
+   font-weight: 600;
+   letter-spacing: 0.3px;
+   white-space: nowrap;
+ }
+
+.score-summary {
+    width: 80%;
+    border-collapse: collapse;
+    margin: 20px auto;
+    color: white;
+}
+.score-summary th, .score-summary td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.score-summary th {
+    background-color: #334155;
+}
+.group-header {
+    background-color: #334155;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+h1 {
+    color: white;
+    text-align: center;
+}
+.card {
+    width: 100%;
+    max-width: 1200px; /* 卡片宽度，可调整 */
+    background: rgba(0,0,0,0.3); /* 默认白色背景 */
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 15px auto;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.card.active {
+    background-color: rgba(0,0,0,0.3); /* 黑色背景，透明度30% */
+    color: #ffffff; /* 白色文字高亮 */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+.card.active .question-title {
+    color: #e0f2fe; /* 标题高亮色 */
+}
+.card.active .raw-output {
+    background-color: rgba(30,30,30,0.8); /* 代码块深色背景 */
+    color: #ffffff; /* 代码字体白色 */
+    border-left-color: #60a5fa;
+}
+.card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+.ok { border: 3px solid #4CAF50; }
+.fail { border: 3px solid #f44336; }
+.card-with-note {
+    border: 3px solid #FFC107; /* 黄色边框 */
+}
+.note {
+    font-weight: bold;
+    color: #800080; /* 紫色 */
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+.question-title {
+    font-size: 18px;
+    color: #0078d7;
+    font-weight: bold;
+}
+.status {
+    font-size: 16px;
+    margin-top: 8px;
+}
+.score {
+    font-size: 14px;
+    color: #333;
+    margin-top: 6px;
+    color: #ffffff;
+}
+.raw-output {
+    font-family: Consolas, monospace;
+    background-color: rgba(0,0,0,0.3);
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    color: #ffffff;
+    max-height: 400px;
+    overflow-y: auto;
+    border-left: 4px solid #ccc;
+}
+.final {
+    width: 65%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 25px;
+    border-radius: 20px;
+    background-color: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    margin: 40px auto 0;
+}
+button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #3498db;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+button.correct.active {
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 6px 12px rgba(0, 255, 0, 0.12);
+    transform: scale(1.05);
+}
+button.wrong {
+    margin-left: 12px;
+    color: #4B0082;
+    background-color: #FFC107;
+}
+button.wrong.active {
+    background-color: #f44336;
+    color: white;
+    box-shadow: 0 6px 12px rgba(255, 0, 0, 0.12);
+    transform: scale(1.05);
+}
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+button:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============ 按钮样式 ============ */
+.id-btn {
+  background: linear-gradient(145deg, #475569, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 6px 14px;
+  margin: 4px 8px 4px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.id-btn:hover {
+  background: linear-gradient(145deg, #64748b, #334155);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.id-btn.active {
+  background: linear-gradient(145deg, #0ea5e9, #0284c7);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+  border: none;
+}
+
+.id-btn:active {
+  transform: scale(0.96);
+}
+
+/* 进入动画 */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+</style>
+
+
+</head>
+<body>
+
+<h1 style='color: white; font-size: 2.5rem; font-weight: bold;'>SCORING RESULT CHECK REPORT - 2025/10/31 15:38:20</h1>
+
+<!-- 🔹 全屏铺满的顶部导航栏 -->
+<div id="sticky-header">
+  <div style="max-width: 1200px; margin: 0 auto;"  class="header-container">
+    <label>Select Sub Criteria ID:</label>
+    <div id="id-buttons">
+      <button class="id-btn active" data-id="all">All IDs</button>
+      <!-- 可以在这里动态添加更多按钮 -->
+    </div>
+  </div>
+</div>
+
+  <!-- 内容容器div -->
+  <div id='content-container' style='width: 100%;'>
+
+<script>
+// 页面滚动时控制导航栏背景变化
+window.addEventListener("scroll", function () {
+  const header = document.getElementById("sticky-header");
+  if (window.scrollY > 10) {
+    header.classList.add("scrolled");
+  } else {
+    header.classList.remove("scrolled");
+  }
+});
+
+// --- ID 切换功能（已修正） ---
+function populateIdSelector() {
+    const buttonContainer = document.getElementById('id-buttons');
+    const cards = document.querySelectorAll('.card');
+    const ids = new Set();
+
+    cards.forEach(card => {
+        const id = card.getAttribute('data-id') || 'unknown';
+        if (id && id !== 'all' && id !== 'unknown') {
+            ids.add(id);
+        }
+    });
+
+    // 移除除第一个（All IDs）外的旧按钮，避免重复生成
+    const existing = Array.from(buttonContainer.querySelectorAll('.id-btn'));
+    existing.slice(1).forEach(b => b.remove());
+
+    // 按字典序生成按钮（可修改排序逻辑）
+    Array.from(ids).sort().forEach(id => {
+        const button = document.createElement('button');
+        button.className = 'id-btn';
+        button.dataset.id = id;
+        const idPrefix = id.split('_')[0];
+        button.textContent = idPrefix;
+        // 仅使用 class 样式，不直接写入 style 属性（避免覆盖主题）
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.id-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            filterCardsById(this.dataset.id);
+        });
+        buttonContainer.appendChild(button);
+    });
+}
+
+// 根据选择的ID筛选卡片
+function filterCardsById(id) {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        const cardId = card.getAttribute('data-id') || 'unknown';
+        const cardPrefix = cardId.split('_')[0];
+        if (id === 'all' || cardPrefix === id) {
+            card.classList.add('active');
+            card.style.display = 'block';
+        } else {
+            card.classList.remove('active');
+            card.style.display = 'none';
+        }
+    });
+
+    // --- 根据ID筛选表格行 ---
+    document.querySelectorAll('.score-summary tr').forEach(row => {
+        if (row.classList.contains('group-header')) {
+            const rowId = row.textContent.replace('ID: ','').trim();
+            row.style.display = (id === 'all' || rowId === id) ? '' : 'none';
+        } else if (row.id.startsWith('summary-row-')) {
+            const idCell = row.children[1];
+            if (idCell) {
+                const rowId = idCell.textContent.split('_')[0];
+                row.style.display = (id === 'all' || rowId === id) ? '' : 'none';
+            }
+        }
+    });
+
+    updateScore(); // 筛选后更新分数
+}
+
+
+// 初始化 ID 选择器并绑定 All IDs 的点击事件
+document.addEventListener('DOMContentLoaded', function() {
+    populateIdSelector();
+
+    const allBtn = document.querySelector('.id-btn[data-id="all"]');
+    if (allBtn) {
+        allBtn.addEventListener('click', function() {
+            document.querySelectorAll('.id-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            filterCardsById('all');
+        });
+    }
+
+    // 允许后续在页面上动态添加卡片后再次调用 populateIdSelector()
+});
+
+// 评分更新和标记逻辑（保持原样，按需可继续调整）
+function updateScore() {
+    var total = 0;
+    var max = 0;
+    document.querySelectorAll('.card').forEach(function(card) {
+        // 只计算可见卡片的分数
+        if (card.style.display === 'none') return;
+        var score = parseFloat(card.getAttribute('data-score')) || 0;
+        var passed = card.classList.contains('ok');
+        max = Math.round((max + score) * 100) / 100;
+        if (passed) total = Math.round((total + score) * 100) / 100;
+
+        // 获取卡片索引（从标题中提取）
+        var titleElement = card.querySelector('.question-title');
+        var index = titleElement ? titleElement.textContent.split('.')[0] : '';
+
+        // 更新汇总表中的Earned分值
+        var earnedCell = document.getElementById('earned-' + index);
+        if (earnedCell) {
+            earnedCell.textContent = passed ? score.toFixed(2) : '0.00';
+        }
+    });
+    var finalScoreEl = document.getElementById('final-score');
+    if (finalScoreEl) {
+        finalScoreEl.innerText = 'Final Score: ' + total.toFixed(2) + ' / Total Points: ' + max.toFixed(2);
+    }
+}
+
+function markCard(el, passed) {
+    var card = el.closest('.card');
+    if (!card) return;
+    card.classList.remove('ok', 'fail', 'card-with-note');
+    // 移除当前卡片中所有确认按钮的 active 类
+    card.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+    // 为当前点击的按钮添加 active 类
+    el.classList.add('active');
+    var status = card.querySelector('.status b');
+    var scoreElement = card.querySelector('.score');
+    var maxScore = parseFloat(card.getAttribute('data-score')) || 0;
+    if (passed) {
+        card.classList.add('ok');
+        if (status) { status.innerText = '✅ Confirmed Correct'; status.style.color = '#4CAF50'; }
+        if (scoreElement) { scoreElement.textContent = 'Score: ' + maxScore.toFixed(2) + ' / Points: ' + maxScore.toFixed(2); }
+    } else {
+        card.classList.add('fail');
+        if (status) { status.innerText = '❌ Confirmed Incorrect'; status.style.color = '#f44336'; }
+        if (scoreElement) { scoreElement.textContent = 'Score: 0.00 / Points: ' + maxScore.toFixed(2); }
+    }
+    updateScore();
+}
+</script>
+
+<div class='card note card-with-note' data-score='0.25' data-id='C1'>
+    <div class='question-title'>1. basic configuration</div>
+    
+    <div class='note'>Note: Check only if password type is 8. Hash value could be different.</div>
+    <div class='status'><b style='color:#FFC107;'>✅ basic configuration correct</b></div>
+    <div class='score'>Score: 0.25 / Points: 0.25</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: wsc2026.cn, clock timezone KST 9 0, enable secret 8
+
+✅ Node ISP: Success (Found: wsc2026.cn, clock timezone KST 9 0, enable secret 8)
+ISP#show running-config | include wsc2026.cn
+ip domain name wsc2026.cn
+
+ISP#show running-config | inc timezone
+clock timezone KST 9 0
+
+ISP#show run | include enable secret
+enable secret 8 $8$7ZAQ/42/pgDlik$xjII6ZvOoeSEcbMHslA5TJ5R/kWv/Ltk729TWG6iNiM
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.20' data-id='C1'>
+    <div class='question-title'>2. ip addressing</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ ip addressing correct</b></div>
+    <div class='score'>Score: 0.20 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: GigabitEthernet1, 100.48.0.254, Loopback0, 8.8.8.8, Loopback1, 13.248.201.117
+
+✅ Node ISP: Success (Found: GigabitEthernet1, 100.48.0.254, Loopback0, 8.8.8.8, Loopback1, 13.248.201.117)
+ISP#show ip interface brief | exclude unassigned|down
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet1       100.48.0.254    YES NVRAM  up                    up      
+Loopback0              8.8.8.8         YES NVRAM  up                    up      
+Loopback1              13.248.201.117  YES NVRAM  up                    up      
+
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.20' data-id='C10'>
+    <div class='question-title'>1. stp - root bridge</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ stp - root bridge incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 12
+
+❌ Node SWCORE: Incorrect configuration (Found: None, Missing: 12)
+SWCORE#show spanning-tree | count root
+Number of lines which match regexp = 2
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.40' data-id='C2'>
+    <div class='question-title'>1. pki server</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ pki server incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: Status: enabled, State: enabled, Issuer name: CN=ROOTCA, Granting mode: auto
+
+❌ Node ISP: Incorrect configuration (Found: Issuer name: CN=ROOTCA, Missing: Status: enabled, State: enabled, Granting mode: auto)
+ISP#show crypto pki server | include enabled|Issuer|mode
+    Issuer name: CN=ROOTCA
+    Granting mode is: auto
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.30' data-id='C2'>
+    <div class='question-title'>2. ospf - basic configuration</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ ospf - basic configuration correct</b></div>
+    <div class='score'>Score: 0.30 / Points: 0.30</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: OSPF Router with ID (8.8.8.8) (Process ID 1), 100.48.0.0 0.0.0.255 area 0
+
+✅ Node ISP: Success (Found: OSPF Router with ID (8.8.8.8) (Process ID 1), 100.48.0.0 0.0.0.255 area 0)
+ISP#show ip ospf topology-info | inc 8.8.8.8
+            OSPF Router with ID (8.8.8.8) (Process ID 1)
+
+ISP#show ip protocols | include 100.48
+    100.48.0.0 0.0.0.255 area 0
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.40' data-id='C3'>
+    <div class='question-title'>1. ospf - no dr/bdr election</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ ospf - no dr/bdr election incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 0.0.0.2, FULL, 100.48.0.2, GigabitEthernet1, 0.0.0.1, FULL, 100.48.0.1, GigabitEthernet1
+
+❌ Node ISP: Incorrect configuration (Found: FULL, FULL, Missing: 0.0.0.2, 100.48.0.2, GigabitEthernet1, 0.0.0.1, 100.48.0.1, GigabitEthernet1)
+ISP#show ip ospf neighbor | include FULL
+
+
+</pre></div>
+</div>
+
+<div class='card note card-with-note' data-score='0.30' data-id='C3'>
+    <div class='question-title'>2. ospf - always advertise default route</div>
+    
+    <div class='note'>Note: No static default route exists</div>
+    <div class='status'><b style='color:#FFC107;'>✅ ospf - always advertise default route correct</b></div>
+    <div class='score'>Score: 0.30 / Points: 0.30</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 0.0.0.0, 8.8.8.8
+
+✅ Node ISP: Success (Found: 0.0.0.0, 8.8.8.8)
+ISP#show ip route  static | inc 0.0.0.0
+
+
+ISP#show ip ospf database | inc 0.0.0.0
+0.0.0.0         8.8.8.8         1721        0x8000000E 0x003055 1         
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.30' data-id='C4'>
+    <div class='question-title'>1. ospf - route tag</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ ospf - route tag incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.30</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 101, 102, 103, 104
+
+❌ Node ISP: Incorrect configuration (Found: None, Missing: 101, 102, 103, 104)
+ISP#show ip ospf database external | include 101|102|103|104
+
+
+</pre></div>
+</div>
+
+<div class='card note card-with-note' data-score='0.40' data-id='C4'>
+    <div class='question-title'>2. ospf - redistributing external routes</div>
+    
+    <div class='note'>Note: There is no IPv4 private address routing, such as 10.10.101.0/24</div>
+    <div class='status'><b style='color:#FFC107;'>❌ ospf - redistributing external routes incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 1.1.1.1, 2.2.2.2, 3.3.3.3, 4.4.4.4, 100.48.0.1, GigabitEthernet1
+
+❌ Node ISP: Incorrect configuration (Found: None, Missing: 1.1.1.1, 2.2.2.2, 3.3.3.3, 4.4.4.4, 100.48.0.1, GigabitEthernet1)
+ISP#show ip route ospf | include O E1
+
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.40' data-id='C5'>
+    <div class='question-title'>1. ospf - area summary</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ ospf - area summary incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 100.48.8.0/21, 100.48.10.0/21, 100.48.0.1
+
+❌ Node ISP: Incorrect configuration (Found: None, Missing: 100.48.8.0/21, 100.48.10.0/21, 100.48.0.1)
+ISP#show ip route ospf | include ^O IA
+
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.40' data-id='C5'>
+    <div class='question-title'>2. bgp - neighborship</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ bgp - neighborship incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 1.1.1.1, AS 101, Established, 2.2.2.2, AS 103, Established, 3.3.3.3, AS 103, Established, 4.4.4.4, AS 104, Established
+
+❌ Node ISP: Incorrect configuration (Found: None, Missing: 1.1.1.1, AS 101, Established, 2.2.2.2, AS 103, Established, 3.3.3.3, AS 103, Established, 4.4.4.4, AS 104, Established)
+ISP#show ip bgp neighbors | include ^BGP|Established
+BGP neighbor is 1.1.1.1,  remote AS 101, external link
+BGP neighbor is 2.2.2.2,  remote AS 102, external link
+BGP neighbor is 3.3.3.3,  remote AS 103, external link
+BGP neighbor is 4.4.4.4,  remote AS 104, external link
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.20' data-id='C6'>
+    <div class='question-title'>1. bgp - advertise network</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ bgp - advertise network correct</b></div>
+    <div class='score'>Score: 0.20 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: 13.248.201.117/32, 0.0.0.0
+
+✅ Node ISP: Success (Found: 13.248.201.117/32, 0.0.0.0)
+ISP#show ip bgp | begin Network
+     Network          Next Hop            Metric LocPrf Weight Path
+ *>   13.248.201.117/32
+                      0.0.0.0                  0         32768 i
+
+</pre></div>
+</div>
+
+<div class='card note card-with-note' data-score='0.25' data-id='C6'>
+    <div class='question-title'>2. basic configuration - swcore</div>
+    
+    <div class='note'>Note: Check only if password type is 8. Hash value could be different.</div>
+    <div class='status'><b style='color:#FFC107;'>✅ basic configuration - swcore correct</b></div>
+    <div class='score'>Score: 0.25 / Points: 0.25</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: wsc2026.cn, clock timezone KST 9 0, enable secret 8
+
+✅ Node SWCORE: Success (Found: wsc2026.cn, clock timezone KST 9 0, enable secret 8)
+SWCORE#show running-config | include wsc2026.cn
+ip domain-name wsc2026.cn
+
+SWCORE#show running-config | inc timezone
+clock timezone KST 9 0
+
+SWCORE#show run | include enable secret
+enable secret 8 $8$MZqhAtaoySkMLv$f2WceWff2MVv6K93R3KorLZHsaPJGIlszC5vi5Gzxhc
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.40' data-id='C7'>
+    <div class='question-title'>1. etherchannel - group 1 & 2</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ etherchannel - group 1 & 2 correct</b></div>
+    <div class='score'>Score: 0.40 / Points: 0.40</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: Gi0/0    Desirable-Sl, Gi0/1    Desirable-Sl, Gi0/2    Active, Gi0/3    Active
+
+✅ Node SWCORE: Success (Found: Gi0/0    Desirable-Sl, Gi0/1    Desirable-Sl, Gi0/2    Active, Gi0/3    Active)
+SWCORE#show etherchannel 1 detail | include Desirable
+Channel group = 1           Mode = Desirable-Sl    Gcchange = 0
+Channel group = 1           Mode = Desirable-Sl    Gcchange = 0
+  0     00     Gi0/0    Desirable-Sl       0
+  0     00     Gi0/1    Desirable-Sl       0
+
+SWCORE#show etherchannel 2 detail | include Active
+Channel group = 2           Mode = Active          Gcchange = -
+Channel group = 2           Mode = Active          Gcchange = -
+  0     00     Gi0/2    Active             0
+  0     00     Gi0/3    Active             0
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.20' data-id='C7'>
+    <div class='question-title'>2. trunk ports</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ trunk ports correct</b></div>
+    <div class='score'>Score: 0.20 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: Po1, Po2, trunking, 999, Off
+
+✅ Node SWCORE: Success (Found: Po1, Po2, trunking, 999, Off)
+SWCORE#show int trunk | include trunking
+Po1         on               802.1q         trunking      999
+PPo2         on               802.1q         trunking      999
+Po2         on               802.1q         trunking      999
+
+SWCORE#show interfaces port-channel 1 switchport | include Negotiation
+Negotiation of Trunking: Off
+
+SWCORE#show interfaces port-channel 2 switchport | include Negotiation
+Negotiation of Trunking: Off
+
+</pre></div>
+</div>
+
+<div class='card note card-with-note' data-score='0.20' data-id='C8'>
+    <div class='question-title'>1. vtp - basic configuration</div>
+    
+    <div class='note'>Note: Check if the password is encrypted</div>
+    <div class='status'><b style='color:#FFC107;'>❌ vtp - basic configuration incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: VTP version running             : 3, VTP Operating Mode                : Primary Server
+
+❌ Node SWCORE: Incorrect configuration (Found: None, Missing: VTP version running             : 3, VTP Operating Mode                : Primary Server)
+SWCORE#show vtp status | include running | Primary Server
+VTP version running             : 1
+
+SWCORE#show vtp password
+The VTP password is not configured.
+
+</pre></div>
+</div>
+
+<div class='card fail ' data-score='0.30' data-id='C8'>
+    <div class='question-title'>2. vtp - pruning</div>
+    
+    <div class='status'><b style='color:#f44336;'>❌ vtp - pruning incorrect</b></div>
+    <div class='score'>Score: 0.00 / Points: 0.30</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: Enabled
+
+❌ Node SWCORE: Incorrect configuration (Found: None, Missing: Enabled)
+SWCORE#show vtp status | include Pruning Mode
+VTP Pruning Mode                : Disabled
+
+</pre></div>
+</div>
+
+<div class='card ok ' data-score='0.20' data-id='C9'>
+    <div class='question-title'>1. stp - mode</div>
+    
+    <div class='status'><b style='color:#4CAF50;'>✅ stp - mode correct</b></div>
+    <div class='score'>Score: 0.20 / Points: 0.20</div>
+    <div>
+        <button class='correct' onclick='markCard(this, true)'>CONFIRM CORRECT</button>
+        <button class='wrong' onclick='markCard(this, false)'>CONFIRM INCORRECT</button>
+    </div>
+    <div class='raw-output'><pre>Expected values: rapid-pvst
+
+✅ Node SWCORE: Success (Found: rapid-pvst)
+SWCORE#show spanning-tree summary | include Switch
+Switch is in rapid-pvst mode
+
+</pre></div>
+</div>
+
+<div class='final' id='final-score'>
+Final Score: 2.30 / Total Points: 5.30
+</div>
+<table class='score-summary'><tr><th>Index</th><th>ID</th><th>Aspect - Description</th><th>Earned</th><th>Max Mark</th></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C1</td></tr><tr id='summary-row-1'><td>1</td><td>C1</td><td>basic configuration</td><td id='earned-1'>0.25</td><td>0.25</td></tr><tr id='summary-row-2'><td>2</td><td>C1</td><td>ip addressing</td><td id='earned-2'>0.20</td><td>0.20</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C10</td></tr><tr id='summary-row-1'><td>1</td><td>C10</td><td>stp - root bridge</td><td id='earned-1'>0.00</td><td>0.20</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C2</td></tr><tr id='summary-row-1'><td>1</td><td>C2</td><td>pki server</td><td id='earned-1'>0.00</td><td>0.40</td></tr><tr id='summary-row-2'><td>2</td><td>C2</td><td>ospf - basic configuration</td><td id='earned-2'>0.30</td><td>0.30</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C3</td></tr><tr id='summary-row-1'><td>1</td><td>C3</td><td>ospf - no dr/bdr election</td><td id='earned-1'>0.00</td><td>0.40</td></tr><tr id='summary-row-2'><td>2</td><td>C3</td><td>ospf - always advertise default route</td><td id='earned-2'>0.30</td><td>0.30</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C4</td></tr><tr id='summary-row-1'><td>1</td><td>C4</td><td>ospf - route tag</td><td id='earned-1'>0.00</td><td>0.30</td></tr><tr id='summary-row-2'><td>2</td><td>C4</td><td>ospf - redistributing external routes</td><td id='earned-2'>0.00</td><td>0.40</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C5</td></tr><tr id='summary-row-1'><td>1</td><td>C5</td><td>ospf - area summary</td><td id='earned-1'>0.00</td><td>0.40</td></tr><tr id='summary-row-2'><td>2</td><td>C5</td><td>bgp - neighborship</td><td id='earned-2'>0.00</td><td>0.40</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C6</td></tr><tr id='summary-row-1'><td>1</td><td>C6</td><td>bgp - advertise network</td><td id='earned-1'>0.20</td><td>0.20</td></tr><tr id='summary-row-2'><td>2</td><td>C6</td><td>basic configuration - swcore</td><td id='earned-2'>0.25</td><td>0.25</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C7</td></tr><tr id='summary-row-1'><td>1</td><td>C7</td><td>etherchannel - group 1 & 2</td><td id='earned-1'>0.40</td><td>0.40</td></tr><tr id='summary-row-2'><td>2</td><td>C7</td><td>trunk ports</td><td id='earned-2'>0.20</td><td>0.20</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C8</td></tr><tr id='summary-row-1'><td>1</td><td>C8</td><td>vtp - basic configuration</td><td id='earned-1'>0.00</td><td>0.20</td></tr><tr id='summary-row-2'><td>2</td><td>C8</td><td>vtp - pruning</td><td id='earned-2'>0.00</td><td>0.30</td></tr><tr class='group-header'><td colspan='5'>Sub Criteria ID: C9</td></tr><tr id='summary-row-1'><td>1</td><td>C9</td><td>stp - mode</td><td id='earned-1'>0.20</td><td>0.20</td></tr></table>
+  </div> <!-- 关闭content-container -->
+</body></html>
