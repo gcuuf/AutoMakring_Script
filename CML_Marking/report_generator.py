@@ -13,6 +13,7 @@ def initialize_html():
 <meta charset='UTF-8'>
 <title>Scoring Result Check Report</title>
 
+<script src="xlsx.full.min.js"></script>
 <style>
 body {{
     font-family: "Segoe UI", Arial, sans-serif;
@@ -443,145 +444,171 @@ def add_card_to_html(html, result, index, note=None):
 
 from utils import global_total_score, global_max_score
 
-def complete_html(html):
-    # 按ID分组并排序
+
+def complete_html(html, utils):
+    # 按ID排序并分组
     sorted_items = sorted(score_summary, key=lambda x: x['id'])
-    # 按ID前缀分组（提取下划线前的部分作为分组依据）
     grouped_items = itertools.groupby(sorted_items, key=lambda x: x['id'].split('_')[0])
-    
-    table_html = "<table class='score-summary'><tr><th>Index</th><th>ID</th><th>Aspect - Description</th><th>Earned</th><th>Max Mark</th></tr>"
-    for id, items in grouped_items:
-        # 添加分组标题行
-        table_html += f"<tr class='group-header'><td colspan='5'>Sub Criteria ID: {id}</td></tr>"
-        # 添加组内条目
+
+    # 构建表格 HTML
+    table_html = """
+<button onclick="exportToExcel()"
+    style="display: block; margin: 10px auto; padding: 8px 16px; 
+           background-color: #4CAF50; color: white; border: none; 
+           border-radius: 4px; cursor: pointer;">
+    导出评分表
+</button>
+
+<table class='score-summary' id='scoreTable'>
+<tr>
+<th>Index</th><th>ID</th><th>Aspect - Description</th><th>Earned</th><th>Max Mark</th>
+</tr>
+"""
+    for id_prefix, items in grouped_items:
+        table_html += f"<tr class='group-header'><td colspan='5'>Sub Criteria ID: {id_prefix}</td></tr>"
         for item in items:
             table_html += f"<tr id='summary-row-{item['index']}'><td>{item['index']}</td><td>{item['id']}</td><td>{item['title']}</td><td id='earned-{item['index']}'>{item['earned']}</td><td>{item['score']}</td></tr>"
+
     table_html += "</table>"
-    return html + f'''
+
+    # 构建完整 HTML
+    full_html = f"""
+{html}
+
 <div class='final' id='final-score'>
 Final Score: {utils.global_total_score:.2f} / Total Points: {utils.global_max_score:.2f}
 </div>
+
 {table_html}
-  </div> <!-- 关闭content-container -->
-</body></html>
-'''
+
+<script>
+function exportToExcel() {{
+    const table = document.getElementById('scoreTable');
+    const wb = XLSX.utils.table_to_book(table);
+    const today = new Date();
+    const dateString = today.getFullYear() + 
+        (today.getMonth()+1).toString().padStart(2,'0') + 
+        today.getDate().toString().padStart(2,'0');
+    const fileName = `ScoringReport_${{dateString}}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}}
+</script>
+
+<!-- 返回顶部按钮 -->
+<button id="back-to-top" class="back-to-top-btn" title="回到顶部">👍</button>
+
+<style>
+/* 返回顶部按钮样式 */
+.back-to-top-btn {{
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #0ea5e9, #0284c7);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}}
+.back-to-top-btn.show {{
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}}
+.back-to-top-btn:hover {{
+    background: linear-gradient(145deg, #0284c7, #0369a1);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.6);
+}}
+.back-to-top-btn:active {{
+    transform: scale(0.95);
+}}
+
+/* 气泡动画样式 */
+.bubble {{
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+    animation: bubble-animation 4s ease-out forwards;
+}}
+@keyframes bubble-animation {{
+    0% {{ transform: scale(0); opacity: 1; }}
+    100% {{ transform: scale(1.5) translateY(-100px) rotate(30deg); opacity: 0; }}
+}}
+</style>
+
+<script>
+const backToTopBtn = document.getElementById('back-to-top');
+window.addEventListener('scroll', () => {{
+    if (window.pageYOffset > 300) {{
+        backToTopBtn.classList.add('show');
+    }} else {{
+        backToTopBtn.classList.remove('show');
+    }}
+}});
+backToTopBtn.addEventListener('click', (e) => {{
+    window.scrollTo({{top: 0, behavior: 'smooth'}});
+    
+    // 创建点击气泡效果
+    const createBubbles = (count) => {{
+        const bubbles = ['❤️', '👍', '✨', '🌟', '🎉'];
+        const btnRect = backToTopBtn.getBoundingClientRect();
+        const startX = btnRect.left + btnRect.width / 2;
+        const startY = btnRect.top + btnRect.height / 2;
+        
+        for (let i = 0; i < count; i++) {{
+            const bubble = document.createElement('span');
+            bubble.className = 'bubble';
+            bubble.textContent = bubbles[Math.floor(Math.random() * bubbles.length)];
+            bubble.style.left = `${{startX}}px`;
+            bubble.style.top = `${{startY}}px`;
+            bubble.style.fontSize = `${{12 + Math.random() * 16}}px`;
+            bubble.style.color = `hsl(${{Math.random() * 360}}, 80%, 60%)`;
+            bubble.style.transform = `translate(-50%, -50%) rotate(${{Math.random() * 360}}deg)`;
+            bubble.style.animationDelay = `${{Math.random() * 500}}ms`;
+            document.body.appendChild(bubble);
+            setTimeout(() => bubble.remove(), 4000);
+        }}
+    }};
+    createBubbles(15);
+}});
+</script>
+
+</body>
+</html>
+"""
+    return full_html
+
+
+import shutil
+import os
 
 def save_and_open_report(html_content):
+    # 确保报告目录存在
     if not os.path.exists(HTML_OUTPUT_DIR):
         os.makedirs(HTML_OUTPUT_DIR)
     
-    # 添加返回顶部按钮的HTML
-    html_content += '''
-    <button id="back-to-top" class="back-to-top-btn" title="回到顶部">👍</button>
-    '''
-    
-    # 添加返回顶部按钮的CSS
-    html_content += '''
-    <style>
-    .back-to-top-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(145deg, #0ea5e9, #0284c7);
-        color: white;
-        font-size: 24px;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-        cursor: pointer;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .back-to-top-btn.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-    .back-to-top-btn:hover {
-        background: linear-gradient(145deg, #0284c7, #0369a1);
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.6);
-    }
-    .back-to-top-btn:active {
-        transform: scale(0.95);
-    }
-    
-    /* 气泡动画样式 */
-    .bubble {
-        position: absolute;
-        pointer-events: none;
-        z-index: 9999;
-        animation: bubble-animation 4s ease-out forwards;
-    }
-    
-    @keyframes bubble-animation {
-        0% {
-            transform: scale(0);
-            opacity: 1;
-        }
-        100% {
-            transform: scale(1.5) translateY(-100px) rotate(30deg);
-            opacity: 0;
-        }
-    }
-    </style>
-    '''
-    
-    # 添加返回顶部按钮的JavaScript
-    html_content += '''
-    <script>
-    const backToTopBtn = document.getElementById('back-to-top');
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 300) {
-            backToTopBtn.classList.add('show');
-        } else {
-            backToTopBtn.classList.remove('show');
-        }
-    });
-    backToTopBtn.addEventListener('click', (e) => {
-        window.scrollTo({top: 0, behavior: 'smooth'});
-        
-        // 创建点击气泡效果
-        const createBubbles = (count) => {
-            const bubbles = ['❤️', '👍', '✨', '🌟', '🎉'];
-            const btnRect = backToTopBtn.getBoundingClientRect();
-            const startX = btnRect.left + btnRect.width / 2;
-            const startY = btnRect.top + btnRect.height / 2;
-            
-            for (let i = 0; i < count; i++) {
-                const bubble = document.createElement('span');
-                bubble.className = 'bubble';
-                bubble.textContent = bubbles[Math.floor(Math.random() * bubbles.length)];
-                bubble.style.left = `${startX}px`;
-                bubble.style.top = `${startY}px`;
-                bubble.style.fontSize = `${12 + Math.random() * 16}px`;
-                bubble.style.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
-                bubble.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
-                bubble.style.animationDelay = `${Math.random() * 500}ms`;
-                
-                document.body.appendChild(bubble);
-                
-                // 动画结束后移除元素
-                setTimeout(() => bubble.remove(), 4000);
-            }
-        };
-        
-        createBubbles(15); // 创建15个随机气泡
-    });
-    </script>
-    '''
-    
+    # 复制xlsx.full.min.js到报告目录
+    js_source = os.path.join(os.path.dirname(__file__), 'xlsx.full.min.js')
+    js_destination = os.path.join(HTML_OUTPUT_DIR, 'xlsx.full.min.js')
+    shutil.copy2(js_source, js_destination)
+
+    if not os.path.exists(HTML_OUTPUT_DIR):
+        os.makedirs(HTML_OUTPUT_DIR)
+
     with open(HTML_FILEPATH, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    
+
     print(f"✅ Report generated: {HTML_FILEPATH}")
-    
     webbrowser.open(HTML_FILEPATH)

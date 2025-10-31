@@ -5,7 +5,7 @@ import os
 from config import HTML_FILEPATH
 import utils
 from network_connector import connect
-from report_generator import initialize_html, add_card_to_html, complete_html, save_and_open_report
+from report_generator import initialize_html, add_card_to_html, complete_html, save_and_open_report, score_summary
 
 def check_configuration(check_name, commands, expected_values, nodes, note=None, score=0, id=None):
     node_results = []
@@ -113,7 +113,7 @@ def main():
         current_index = id_counter[result_id]
         note = getattr(result, 'note', None)
         html = add_card_to_html(html, result, current_index, note=note)
-    html = complete_html(html)
+    html = complete_html(html, utils)
     save_and_open_report(html)
     print("\nCheck completed! Report has been opened automatically.")
 
