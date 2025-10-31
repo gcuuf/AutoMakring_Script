@@ -22,6 +22,38 @@ body {{
     align-items: center;
     padding: 30px;
 }}
+/* ============ 外层导航栏 ============ */
+#sticky-header {{
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw; /* ✅ 确保铺满整个视口宽度 */
+  z-index: 100;
+  background: transparent; /* 初始透明 */
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+}}
+/* 滚动后添加视觉强调 */
+#sticky-header.scrolled {{
+  background: rgba(30, 41, 59, 0.8); /* 半透明深色背景 */
+  backdrop-filter: blur(10px);       /* 模糊效果 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}}
+/* ============ 文本样式 ============ */
+.header-container {{
+   display: flex;
+   align-items: center;
+   gap: 16px;
+   padding: 8px 0;
+ }}
+ .header-container label {{
+   color: #f1f5f9;
+   font-size: 15px;
+   font-weight: 600;
+   letter-spacing: 0.3px;
+   white-space: nowrap;
+ }}
+
 .score-summary {{
     width: 80%;
     border-collapse: collapse;
@@ -162,36 +194,35 @@ button:active {{
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }}
 
-/* 切换界面 - ID 按钮样式 */
+/* ============ 按钮样式 ============ */
 .id-btn {{
+  background: linear-gradient(145deg, #475569, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
   padding: 6px 14px;
+  margin: 4px 8px 4px 0;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  background: linear-gradient(135deg, #1e293b, #334155);
-  color: #f1f5f9;
-  border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
-  opacity: 0;
-  transform: scale(0.95);
-  animation: fadeIn 0.4s ease forwards;
-  margin: 4px 6px 4px 0;
 }}
 
 .id-btn:hover {{
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #fff;
+  background: linear-gradient(145deg, #64748b, #334155);
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(59,130,246,0.4);
+  color: #ffffff;
 }}
 
 .id-btn.active {{
-  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  background: linear-gradient(145deg, #0ea5e9, #0284c7);
   color: #fff;
-  border-color: rgba(255,255,255,0.25);
-  box-shadow: 0 2px 6px rgba(14,165,233,0.45);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+  border: none;
+}}
+
+.id-btn:active {{
+  transform: scale(0.96);
 }}
 
 /* 进入动画 */
@@ -209,43 +240,31 @@ button:active {{
 
 <h1 style='color: white; font-size: 2.5rem; font-weight: bold;'>SCORING RESULT CHECK REPORT - {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}</h1>
 
-  <!-- 平铺式ID切换控件 -->
-    <div style="
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.12);
-    padding: 14px 18px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-    ">
-    <label style="
-        color: #e2e8f0;
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        display: block;
-        margin-bottom: 10px;
-    ">
-        Select 评分对象 ID:
-    </label>
-
-    <div id="id-buttons" style="
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: flex-start;
-    ">
-        <!-- 保留一个 All IDs 按钮，其他按钮将由 JS 动态生成 -->
-        <button class="id-btn active" data-id="all">All IDs</button>
+<!-- 🔹 全屏铺满的顶部导航栏 -->
+<div id="sticky-header">
+  <div style="max-width: 1200px; margin: 0 auto;"  class="header-container">
+    <label>Select Sub Criteria ID:</label>
+    <div id="id-buttons">
+      <button class="id-btn active" data-id="all">All IDs</button>
+      <!-- 可以在这里动态添加更多按钮 -->
     </div>
-    </div>
+  </div>
+</div>
 
   <!-- 内容容器div -->
   <div id='content-container' style='width: 100%;'>
 
-  <script>
+<script>
+// 页面滚动时控制导航栏背景变化
+window.addEventListener("scroll", function () {{
+  const header = document.getElementById("sticky-header");
+  if (window.scrollY > 10) {{
+    header.classList.add("scrolled");
+  }} else {{
+    header.classList.remove("scrolled");
+  }}
+}});
+
 // --- ID 切换功能（已修正） ---
 function populateIdSelector() {{
     const buttonContainer = document.getElementById('id-buttons');
@@ -269,7 +288,7 @@ function populateIdSelector() {{
         button.className = 'id-btn';
         button.dataset.id = id;
         const idPrefix = id.split('_')[0];
-        button.textContent = 'Sub Criteria ID: ' + idPrefix;
+        button.textContent = idPrefix;
         // 仅使用 class 样式，不直接写入 style 属性（避免覆盖主题）
         button.addEventListener('click', function() {{
             document.querySelectorAll('.id-btn').forEach(btn => btn.classList.remove('active'));
