@@ -7,8 +7,7 @@ import utils
 from network_connector import connect
 from report_generator import initialize_html, add_card_to_html, complete_html, save_and_open_report
 
-
-def check_configuration(check_name, commands, expected_values, nodes, note=None, score=0):
+def check_configuration(check_name, commands, expected_values, nodes, note=None, score=0, id=None):
     node_results = []
     all_passed = True  # initially set to True, assuming all_pass
 
@@ -64,7 +63,8 @@ def check_configuration(check_name, commands, expected_values, nodes, note=None,
         passed=all_passed,
         score=score,
         raw_output=combined_result,
-        note=note
+        note=note,
+        id=id
     )
 
 
@@ -94,18 +94,25 @@ def main():
         check_configuration(
             check_name=row['check_name'],
             commands=[cmd.strip() for cmd in str(row['command']).split(',')] if pd.notna(row['command']) else [],
-            expected_values=[ev.strip() for ev in str(row['expected_values']).split(',') if ev.strip()] if pd.notna(row['expected_values']) else [],
-            nodes=[node.strip() for node in str(row['NODES']).split(',')] if pd.notna(row['NODES']) else [],
+            expected_values=[ev.strip() for ev in str(row['expected_values']).split(',') if ev.strip()] if pd.notna(row['expected_values']) else [],    
+            nodes=[node.strip() for node in str(row['node']).split(',')] if pd.notna(row['node']) else [],
             note=row['note'] if pd.notna(row['note']) else None,
-            score=float(row['score']) if pd.notna(row['score']) else 0
+            score=float(row['score']) if pd.notna(row['score']) else 0,
+            id=row['id'] if pd.notna(row['id']) else None
         )
 
     # generate HTML report
     print("\nGenerating HTML report...")
     html = initialize_html()
-    for i, result in enumerate(utils.global_results, 1):
+    # 按ID排序结果并分组编号
+    sorted_results = sorted(utils.global_results, key=lambda x: x.id)
+    id_counter = {}
+    for result in sorted_results:
+        result_id = result.id or "unknown"
+        id_counter[result_id] = id_counter.get(result_id, 0) + 1
+        current_index = id_counter[result_id]
         note = getattr(result, 'note', None)
-        html = add_card_to_html(html, result, i, note=note)
+        html = add_card_to_html(html, result, current_index, note=note)
     html = complete_html(html)
     save_and_open_report(html)
     print("\nCheck completed! Report has been opened automatically.")

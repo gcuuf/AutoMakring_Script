@@ -1,22 +1,23 @@
 from datetime import datetime
 
 class CheckResult:
-    def __init__(self, title, status_text, passed, score, raw_output="", note=None):
+    def __init__(self, title, status_text, passed, score, raw_output="", note=None, id=None):
         self.title = title
         self.status_text = status_text
         self.passed = passed
         self.score = score
         self.raw_output = raw_output
         self.note = note
+        self.id = id
 
 # Result List and Score Statistics
 global_results = []
 global_total_score = 0.00
 global_max_score = 0.00
 
-def add_check_result(title, status_text, passed, score, raw_output="", note=None):
+def add_check_result(title, status_text, passed, score, raw_output="", note=None, id=None):
     global global_total_score, global_max_score
-    result = CheckResult(title, status_text, passed, score, raw_output, note=note)
+    result = CheckResult(title, status_text, passed, score, raw_output, note=note, id=id)
     global_results.append(result)
     global_max_score += score
     if passed:
